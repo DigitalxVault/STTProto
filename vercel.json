@@ -6,5 +6,8 @@
         { "key": "Cache-Control", "value": "no-cache, no-store, must-revalidate" }
       ]
     }
-  ]
+  ],
+  "functions": {
+    "api/transcribe.js": { "maxDuration": 30 }
+  }
 }
