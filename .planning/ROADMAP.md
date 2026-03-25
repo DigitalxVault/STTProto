@@ -72,10 +72,10 @@ Plans:
   2. Transcript text appears on screen as a new line within a perceptible delay after release
   3. Each transmission appears as a separate entry in the transcript panel above the mic button
   4. Transcription failure shows a visible error state rather than silently swallowing the recording
-**Plans**: TBD
+**Plans**: 1 plan
 
 Plans:
-- [ ] 04-01: API client (api.js), transcript renderer (transcript.js), and app.js state machine wiring PTT through the full pipeline
+- [ ] 04-01-PLAN.md — Wire audio-captured event through /api/transcribe to transcript panel display
 
 ## Progress
 
