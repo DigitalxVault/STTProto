@@ -8,6 +8,7 @@
     }
   ],
   "functions": {
-    "api/transcribe.js": { "maxDuration": 30 }
+    "api/transcribe.js": { "maxDuration": 30 },
+    "api/session.js": { "maxDuration": 15 }
   }
 }
