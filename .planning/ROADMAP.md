@@ -32,8 +32,8 @@ Decimal phases appear between their surrounding integers in numeric order.
 **Plans**: 2 plans
 
 Plans:
-- [ ] 01-01-PLAN.md — HTML/CSS shell with military aesthetic, bottom-right mic button, and all visual button states
-- [ ] 01-02-PLAN.md — manifest.json, service worker, icons, vercel.json for PWA installability and offline caching
+- [x] 01-01-PLAN.md — HTML/CSS shell with military aesthetic, bottom-right mic button, and all visual button states
+- [x] 01-02-PLAN.md — manifest.json, service worker, icons, vercel.json for PWA installability and offline caching
 
 ### Phase 2: Audio Capture
 **Goal**: Users can press-and-hold the mic button to capture audio that produces a valid, non-empty blob on both Android Chrome and iOS Safari
@@ -44,11 +44,11 @@ Plans:
   2. Mic button state changes correctly: idle on load, pulsing red while recording, returns to idle on release
   3. Captured blob has size > 0 bytes and a valid MIME type (webm/opus or mp4 depending on browser)
   4. Audio capture works in both browser tab and installed PWA standalone mode on iOS Safari
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 02-01: PTT gesture handling (pointerdown/pointerup/pointercancel) and MediaRecorder lifecycle with blob assembly
-- [ ] 02-02: MIME type runtime detection, blob size validation, and mic state feedback integration
+- [ ] 02-01-PLAN.md — PTT gesture handling (pointerdown/pointerup/pointercancel) and MediaRecorder lifecycle with blob assembly
+- [ ] 02-02-PLAN.md — Error handling, permission UX, blob validation, MIME logging, and cross-browser diagnostics
 
 ### Phase 3: Vercel Proxy
 **Goal**: A deployed serverless function accepts an audio blob, forwards it to OpenAI Whisper, and returns transcript text without exposing the API key to the client
