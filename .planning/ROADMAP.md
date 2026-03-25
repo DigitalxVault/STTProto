@@ -26,14 +26,14 @@ Decimal phases appear between their surrounding integers in numeric order.
 **Success Criteria** (what must be TRUE):
   1. App passes Chrome DevTools PWA installability checklist and can be added to home screen on Android and iOS
   2. Service worker registers and app shell loads from cache when offline
-  3. Screen shows dark military aesthetic with mic button centered at bottom and transcript panel above
+  3. Screen shows dark military aesthetic with mic button in bottom-right and transcript panel above
   4. Mic button visually cycles through idle (grey), recording (pulsing red), and processing (spinner) states
   5. Layout is portrait-oriented and usable on an iPhone-sized screen without horizontal scroll
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 01-01: HTML/CSS shell with military aesthetic, layout, and all visual button states
-- [ ] 01-02: manifest.json, service worker registration, and PWA installability verification
+- [ ] 01-01-PLAN.md — HTML/CSS shell with military aesthetic, bottom-right mic button, and all visual button states
+- [ ] 01-02-PLAN.md — manifest.json, service worker, icons, vercel.json for PWA installability and offline caching
 
 ### Phase 2: Audio Capture
 **Goal**: Users can press-and-hold the mic button to capture audio that produces a valid, non-empty blob on both Android Chrome and iOS Safari
@@ -84,7 +84,7 @@ Phases 2 and 3 are independently buildable in parallel. All other phases are str
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Shell + PWA | 0/2 | Not started | - |
+| 1. Shell + PWA | 0/2 | Planned | - |
 | 2. Audio Capture | 0/2 | Not started | - |
 | 3. Vercel Proxy | 0/1 | Not started | - |
 | 4. Pipeline Integration | 0/1 | Not started | - |
