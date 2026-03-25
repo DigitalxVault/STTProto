@@ -10,13 +10,13 @@ See: .planning/PROJECT.md (updated 2026-03-25)
 ## Current Position
 
 Phase: 4.1 of 4.1 (Real-time Transcription + Layout Fix)
-Plan: 1 of 2 in current phase
-Status: In progress — Layout fix complete, Realtime API integration pending
-Last activity: 2026-03-25 — Completed 04.1-01-PLAN.md (Bottom-anchored transcript layout: fixed bottom-bar, column-reverse transcript)
+Plan: 2 of 2 in current phase
+Status: Phase complete — All plans done
+Last activity: 2026-03-25 — Completed 04.1-02-PLAN.md (Realtime WebSocket transcription: replaced batch Whisper with OpenAI Realtime API streaming)
 
-Progress: [███████░░░] 70%
+Progress: [██████████] 100%
 
-_(7 of 8 plans complete across all phases — Phase 4.1 Plan 1 done, Plan 2 pending)_
+_(8 of 8 plans complete across all phases — Phase 4.1 fully done)_
 
 ## Performance Metrics
 
@@ -33,7 +33,7 @@ _(7 of 8 plans complete across all phases — Phase 4.1 Plan 1 done, Plan 2 pend
 | 02-audio-capture | 2/2 done | ~2 min | ~1 min |
 | 03-vercel-proxy | 1/1 done | ~5 min | ~5 min |
 | 04-pipeline-integration | 1/1 done | ~3 min | ~3 min |
-| 04.1-realtime-transcription-layout | 1/2 done | ~1 min | ~1 min |
+| 04.1-realtime-transcription-layout | 2/2 done | ~3 min | ~1.5 min |
 
 **Recent Trend:**
 - Last 7 plans: ~10 min, ~2 min, ~1 min, ~1 min, ~5 min, ~3 min, ~1 min
@@ -86,6 +86,11 @@ Recent decisions affecting current work:
 - [04.1-01]: pointer-events: none on bottom-bar, auto on children — prevents fixed layer blocking taps on page content
 - [04.1-01]: .state-demo CSS removed — Phase 1 verification strip no longer needed in production
 - [04.1-01]: transcript-panel background transparent, text-shadow on entries for legibility on dark background
+- [04.1-02]: acquireMic uses { channelCount: 1 } only — no echoCancellation/noiseSuppression/autoGainControl for Realtime API VAD
+- [04.1-02]: WebSocket subprotocol auth: openai-insecure-api-key.{ephemeral_token}
+- [04.1-02]: 1500ms grace window after input_audio_buffer.commit before ws.close() — allows final completed event
+- [04.1-02]: Silent gain node (gain=0) routes workletNode to destination — required for AudioWorklet to process without mic playback
+- [04.1-02]: scrollTop removed from transcript helpers — column-reverse handles upward growth
 
 ### Roadmap Evolution
 
@@ -93,7 +98,7 @@ Recent decisions affecting current work:
 
 ### Pending Todos
 
-- Phase 4.1 Plan 02: replace batch Whisper with OpenAI Realtime API WebSocket streaming
+None — all planned phases complete.
 
 ### Blockers/Concerns
 
@@ -102,6 +107,6 @@ Recent decisions affecting current work:
 
 ## Session Continuity
 
-Last session: 2026-03-25T09:04:58Z
-Stopped at: Completed 04.1-01-PLAN.md — Bottom-anchored transcript layout with fixed bottom-bar and column-reverse flex.
+Last session: 2026-03-25T09:09:16Z
+Stopped at: Completed 04.1-02-PLAN.md — Realtime WebSocket transcription replacing batch Whisper. All phases complete.
 Resume file: None
