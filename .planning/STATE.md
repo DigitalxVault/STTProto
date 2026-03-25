@@ -5,24 +5,24 @@
 See: .planning/PROJECT.md (updated 2026-03-25)
 
 **Core value:** Push-to-talk produces accurate, immediate transcription so users can see exactly what they said and self-correct their RT discipline
-**Current focus:** Phase 2 — Audio Capture (Phase 1 complete)
+**Current focus:** Phase 3 — Vercel Proxy (Phase 2 complete)
 
 ## Current Position
 
-Phase: 2 of 4 (Audio Capture) — In progress
-Plan: 1 of 2 in current phase
-Status: In progress
-Last activity: 2026-03-25 — Completed 02-01-PLAN.md (PTT gesture handling + MediaRecorder lifecycle)
+Phase: 2 of 4 (Audio Capture) — Phase complete
+Plan: 2 of 2 in current phase
+Status: Phase complete — ready for Phase 3
+Last activity: 2026-03-25 — Completed 02-02-PLAN.md (audio capture hardening: permission UX, blob validation, diagnostics)
 
-Progress: [███░░░░░░░] 30%
+Progress: [████░░░░░░] 40%
 
-_(3 of ~10 plans complete across all phases)_
+_(4 of ~10 plans complete across all phases)_
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 3
-- Average duration: ~4 min
+- Total plans completed: 4
+- Average duration: ~3 min
 - Total execution time: ~0.2 hours
 
 **By Phase:**
@@ -30,10 +30,10 @@ _(3 of ~10 plans complete across all phases)_
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 01-shell-pwa | 2/2 done | ~12 min | ~6 min |
-| 02-audio-capture | 1/2 done | ~1 min | ~1 min |
+| 02-audio-capture | 2/2 done | ~2 min | ~1 min |
 
 **Recent Trend:**
-- Last 5 plans: ~10 min, ~2 min, ~1 min
+- Last 5 plans: ~10 min, ~2 min, ~1 min, ~1 min
 - Trend: Accelerating
 
 *Updated after each plan completion*
@@ -61,10 +61,16 @@ Recent decisions affecting current work:
 - [02-01]: MIME priority: audio/webm;codecs=opus > audio/webm > audio/mp4 > browser default
 - [02-01]: audio-captured CustomEvent dispatched on micBtn with bubbles:true — Phase 4 can listen at document level
 - [02-01]: Stream cached with liveness check (readyState === 'live') — no re-prompt on second press
+- [02-02]: showStatusTemp restores previous text/color by capturing them before override — avoids hardcoding STANDBY
+- [02-02]: NotAllowedError and PermissionDeniedError both map to MIC BLOCKED — covers Firefox naming difference
+- [02-02]: Rapid tap guard calls setState('idle') directly rather than stopRecording() to avoid null-recorder errors
+- [02-02]: Diagnostics use typeof MediaRecorder !== 'undefined' guard so script does not throw on unsupported browsers
+- [02-02]: Display mode check combines matchMedia standalone and navigator.standalone for iOS/Android parity
+- [02-02]: All [PTT] prefixed console logs enable easy DevTools filtering in production debugging
 
 ### Pending Todos
 
-- Phase 2 Plan 01 complete. Ready to execute 02-02 (blob validation / iOS silent audio workaround).
+- Phase 2 complete. Ready to execute Phase 3 (Vercel proxy / OpenAI Whisper API integration).
 
 ### Blockers/Concerns
 
@@ -73,6 +79,6 @@ Recent decisions affecting current work:
 
 ## Session Continuity
 
-Last session: 2026-03-25T05:13:22Z
-Stopped at: Completed 02-01-PLAN.md — PTT gesture handling + MediaRecorder lifecycle in app.js, Phase 1 demo strip removed from index.html.
+Last session: 2026-03-25T05:16:04Z
+Stopped at: Completed 02-02-PLAN.md — audio capture hardening with permission UX, blob validation, MIME logging, rapid tap guard, and cross-browser diagnostics in app.js.
 Resume file: None
