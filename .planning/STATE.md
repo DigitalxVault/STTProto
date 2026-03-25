@@ -9,31 +9,32 @@ See: .planning/PROJECT.md (updated 2026-03-25)
 
 ## Current Position
 
-Phase: 1 of 4 (Shell + PWA) — COMPLETE
-Plan: 2 of 2 in current phase
-Status: Phase complete
-Last activity: 2026-03-25 — Completed 01-02-PLAN.md (PWA: manifest, sw.js, vercel.json, icons)
+Phase: 2 of 4 (Audio Capture) — In progress
+Plan: 1 of 2 in current phase
+Status: In progress
+Last activity: 2026-03-25 — Completed 02-01-PLAN.md (PTT gesture handling + MediaRecorder lifecycle)
 
-Progress: [██░░░░░░░░] 20%
+Progress: [███░░░░░░░] 30%
 
-_(2 of ~10 plans complete across all phases)_
+_(3 of ~10 plans complete across all phases)_
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 2
-- Average duration: 6 min
-- Total execution time: 0.2 hours
+- Total plans completed: 3
+- Average duration: ~4 min
+- Total execution time: ~0.2 hours
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 01-shell-pwa | 2/2 done | ~12 min | ~6 min |
+| 02-audio-capture | 1/2 done | ~1 min | ~1 min |
 
 **Recent Trend:**
-- Last 5 plans: ~10 min, ~2 min
-- Trend: —
+- Last 5 plans: ~10 min, ~2 min, ~1 min
+- Trend: Accelerating
 
 *Updated after each plan completion*
 
@@ -55,10 +56,15 @@ Recent decisions affecting current work:
 - [01-02]: sw.js excludes /api/* from cache — Phase 4 Vercel proxy at /api/transcribe must never be cached
 - [01-02]: vercel.json sets no-cache, no-store on /sw.js — prevents stale service worker on Vercel edge deploys
 - [01-02]: CACHE_NAME versioning pattern (rt-trainer-v1) — bump version string to invalidate cache on future deploys
+- [02-01]: setState('processing') called in stopRecording() immediately; setState('idle') called inside recorder.onstop — brief PROCESSING state visible between button release and blob ready
+- [02-01]: setPointerCapture called in pointerdown — required for iOS PTT reliability when finger slides off button
+- [02-01]: MIME priority: audio/webm;codecs=opus > audio/webm > audio/mp4 > browser default
+- [02-01]: audio-captured CustomEvent dispatched on micBtn with bubbles:true — Phase 4 can listen at document level
+- [02-01]: Stream cached with liveness check (readyState === 'live') — no re-prompt on second press
 
 ### Pending Todos
 
-- Phase 1 complete. Ready to begin Phase 2 (Audio Capture) planning and execution.
+- Phase 2 Plan 01 complete. Ready to execute 02-02 (blob validation / iOS silent audio workaround).
 
 ### Blockers/Concerns
 
@@ -67,6 +73,6 @@ Recent decisions affecting current work:
 
 ## Session Continuity
 
-Last session: 2026-03-25T04:16:42Z
-Stopped at: Completed 01-02-PLAN.md — PWA infrastructure (manifest, sw.js, vercel.json, icons) committed. Phase 1 complete.
+Last session: 2026-03-25T05:13:22Z
+Stopped at: Completed 02-01-PLAN.md — PTT gesture handling + MediaRecorder lifecycle in app.js, Phase 1 demo strip removed from index.html.
 Resume file: None
