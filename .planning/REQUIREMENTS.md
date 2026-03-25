@@ -76,12 +76,12 @@ Which phases cover which requirements. Updated during roadmap creation.
 | STT-02 | Phase 3 | Pending |
 | STT-03 | Phase 4 | Pending |
 | STT-04 | Phase 3 | Pending |
-| UI-01 | Phase 1 | Pending |
-| UI-02 | Phase 1 | Pending |
-| UI-03 | Phase 1 | Pending |
-| UI-04 | Phase 1 | Pending |
-| PWA-01 | Phase 1 | Pending |
-| PWA-02 | Phase 1 | Pending |
+| UI-01 | Phase 1 | Complete |
+| UI-02 | Phase 1 | Complete |
+| UI-03 | Phase 1 | Complete |
+| UI-04 | Phase 1 | Complete |
+| PWA-01 | Phase 1 | Complete |
+| PWA-02 | Phase 1 | Complete |
 
 **Coverage:**
 - v1 requirements: 13 total
