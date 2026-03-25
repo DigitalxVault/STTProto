@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-03-25)
 
 **Core value:** Push-to-talk produces accurate, immediate transcription so users can see exactly what they said and self-correct their RT discipline
-**Current focus:** Phase 3 — Vercel Proxy (Phase 2 complete)
+**Current focus:** Phase 4 — Integration (Phase 3 complete)
 
 ## Current Position
 
-Phase: 2 of 4 (Audio Capture) — Phase complete
-Plan: 2 of 2 in current phase
-Status: Phase complete — ready for Phase 3
-Last activity: 2026-03-25 — Completed 02-02-PLAN.md (audio capture hardening: permission UX, blob validation, diagnostics)
+Phase: 3 of 4 (Vercel Proxy) — Phase complete
+Plan: 1 of 1 in current phase
+Status: Phase complete — ready for Phase 4
+Last activity: 2026-03-25 — Completed 03-01-PLAN.md (Vercel proxy: POST /api/transcribe with OpenAI Whisper)
 
-Progress: [████░░░░░░] 40%
+Progress: [█████░░░░░] 50%
 
-_(4 of ~10 plans complete across all phases)_
+_(5 of ~10 plans complete across all phases)_
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 4
+- Total plans completed: 5
 - Average duration: ~3 min
 - Total execution time: ~0.2 hours
 
@@ -31,10 +31,11 @@ _(4 of ~10 plans complete across all phases)_
 |-------|-------|-------|----------|
 | 01-shell-pwa | 2/2 done | ~12 min | ~6 min |
 | 02-audio-capture | 2/2 done | ~2 min | ~1 min |
+| 03-vercel-proxy | 1/1 done | ~5 min | ~5 min |
 
 **Recent Trend:**
-- Last 5 plans: ~10 min, ~2 min, ~1 min, ~1 min
-- Trend: Accelerating
+- Last 5 plans: ~10 min, ~2 min, ~1 min, ~1 min, ~5 min
+- Trend: Stable fast
 
 *Updated after each plan completion*
 
@@ -67,18 +68,26 @@ Recent decisions affecting current work:
 - [02-02]: Diagnostics use typeof MediaRecorder !== 'undefined' guard so script does not throw on unsupported browsers
 - [02-02]: Display mode check combines matchMedia standalone and navigator.standalone for iOS/Android parity
 - [02-02]: All [PTT] prefixed console logs enable easy DevTools filtering in production debugging
+- [03-01]: Web Standard POST export (not legacy req/res) — required for Vercel ESM runtime
+- [03-01]: toFile(buffer, filename, {type}) used to feed ArrayBuffer into Whisper API
+- [03-01]: 5 ordered guards: API key → content-type → formData parse → file field → 4MB size limit
+- [03-01]: MIME-to-ext map covers webm/mp4/ogg/wav/mp3 with webm default
+- [03-01]: maxDuration: 30s in vercel.json — Whisper can take 10-20s; leaves headroom
+- [03-01]: No CORS headers added — Phase 4 integration is same-origin
 
 ### Pending Todos
 
-- Phase 2 complete. Ready to execute Phase 3 (Vercel proxy / OpenAI Whisper API integration).
+- Phase 3 complete. Ready to execute Phase 4 (frontend integration: wire audio-captured event → /api/transcribe → display text).
+- User must set OPENAI_API_KEY in .env (local) and Vercel Dashboard (production) before endpoint is usable.
 
 ### Blockers/Concerns
 
 - [Research]: iOS 16/17 device availability for testing — silent audio bug is most severe on older iOS; need to clarify target device baseline during Phase 2 planning
-- [Research]: Vercel Hobby plan timeout (10s vs 300s) — confirm in Vercel dashboard before Phase 3 deployment
+- [Research]: Vercel Hobby plan timeout may cap maxDuration at 10s despite 30s config — confirm in Vercel dashboard before production deployment
+- [Setup]: OPENAI_API_KEY must be configured before /api/transcribe can be tested or deployed
 
 ## Session Continuity
 
-Last session: 2026-03-25T05:16:04Z
-Stopped at: Completed 02-02-PLAN.md — audio capture hardening with permission UX, blob validation, MIME logging, rapid tap guard, and cross-browser diagnostics in app.js.
+Last session: 2026-03-25T05:25:00Z
+Stopped at: Completed 03-01-PLAN.md — Vercel proxy with POST /api/transcribe, 5-guard validation, toFile Whisper conversion, vercel.json maxDuration.
 Resume file: None
