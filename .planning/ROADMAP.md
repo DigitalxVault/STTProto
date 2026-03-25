@@ -15,7 +15,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 1: Shell + PWA** - Installable military-aesthetic app shell with all visual states
 - [x] **Phase 2: Audio Capture** - Push-to-talk recording with confirmed blob production on iOS and Android
 - [x] **Phase 3: Vercel Proxy** - Serverless function that proxies audio to Whisper and returns transcript text
-- [ ] **Phase 4: Pipeline Integration** - Wire audio → proxy → transcript into working end-to-end PTT loop
+- [x] **Phase 4: Pipeline Integration** - Wire audio → proxy → transcript into working end-to-end PTT loop
 
 ## Phase Details
 
@@ -87,4 +87,4 @@ Phases 2 and 3 are independently buildable in parallel. All other phases are str
 | 1. Shell + PWA | 2/2 | Complete | 2026-03-25 |
 | 2. Audio Capture | 2/2 | Complete | 2026-03-25 |
 | 3. Vercel Proxy | 1/1 | Complete | 2026-03-25 |
-| 4. Pipeline Integration | 0/1 | Not started | - |
+| 4. Pipeline Integration | 1/1 | Complete | 2026-03-25 |
