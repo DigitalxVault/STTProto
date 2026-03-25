@@ -5,34 +5,34 @@
 See: .planning/PROJECT.md (updated 2026-03-25)
 
 **Core value:** Push-to-talk produces accurate, immediate transcription so users can see exactly what they said and self-correct their RT discipline
-**Current focus:** Phase 1 — Shell + PWA
+**Current focus:** Phase 2 — Audio Capture (Phase 1 complete)
 
 ## Current Position
 
-Phase: 1 of 4 (Shell + PWA)
-Plan: 1 of 2 in current phase
-Status: In progress
-Last activity: 2026-03-25 — Completed 01-01-PLAN.md (App Shell: index.html, style.css, app.js)
+Phase: 1 of 4 (Shell + PWA) — COMPLETE
+Plan: 2 of 2 in current phase
+Status: Phase complete
+Last activity: 2026-03-25 — Completed 01-02-PLAN.md (PWA: manifest, sw.js, vercel.json, icons)
 
-Progress: [█░░░░░░░░░] 10%
+Progress: [██░░░░░░░░] 20%
 
-_(1 of ~10 plans complete across all phases)_
+_(2 of ~10 plans complete across all phases)_
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 1
-- Average duration: 1 min
-- Total execution time: 0.02 hours
+- Total plans completed: 2
+- Average duration: 6 min
+- Total execution time: 0.2 hours
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
-| 01-shell-pwa | 1/2 done | 1 min | 1 min |
+| 01-shell-pwa | 2/2 done | ~12 min | ~6 min |
 
 **Recent Trend:**
-- Last 5 plans: 1 min
+- Last 5 plans: ~10 min, ~2 min
 - Trend: —
 
 *Updated after each plan completion*
@@ -51,10 +51,14 @@ Recent decisions affecting current work:
 - [01-01]: Use 100dvh (not 100vh) to handle iOS Safari dynamic viewport bar clipping
 - [01-01]: Button state machine: swap state-idle / state-recording / state-processing classes on .mic-btn
 - [01-01]: Phase 1 demo strip included in HTML to verify all three states render without JS
+- [01-02]: Separate purpose entries for any vs maskable icons — Chrome 2023+ prefers explicit separation over combined "any maskable"
+- [01-02]: sw.js excludes /api/* from cache — Phase 4 Vercel proxy at /api/transcribe must never be cached
+- [01-02]: vercel.json sets no-cache, no-store on /sw.js — prevents stale service worker on Vercel edge deploys
+- [01-02]: CACHE_NAME versioning pattern (rt-trainer-v1) — bump version string to invalidate cache on future deploys
 
 ### Pending Todos
 
-- Plan 02 (manifest.json, icons, installability) is ready to execute
+- Phase 1 complete. Ready to begin Phase 2 (Audio Capture) planning and execution.
 
 ### Blockers/Concerns
 
@@ -63,6 +67,6 @@ Recent decisions affecting current work:
 
 ## Session Continuity
 
-Last session: 2026-03-25T04:15:27Z
-Stopped at: Completed 01-01-PLAN.md — App shell (index.html, style.css, app.js) committed
+Last session: 2026-03-25T04:16:42Z
+Stopped at: Completed 01-02-PLAN.md — PWA infrastructure (manifest, sw.js, vercel.json, icons) committed. Phase 1 complete.
 Resume file: None
