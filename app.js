@@ -178,3 +178,14 @@ micBtn.addEventListener('pointerup', function () {
 micBtn.addEventListener('pointercancel', function () {
   handlePressEnd();
 });
+
+// ── Diagnostics ───────────────────────────────────────────────────────────────
+console.log('[PTT] Audio capture module loaded');
+console.log('[PTT] MediaRecorder supported:', typeof MediaRecorder !== 'undefined');
+console.log('[PTT] Pointer Events supported:', typeof PointerEvent !== 'undefined');
+console.log('[PTT] Display mode:', (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone) ? 'standalone' : 'browser');
+console.log('[PTT] MIME support:', {
+  'webm/opus': typeof MediaRecorder !== 'undefined' && MediaRecorder.isTypeSupported('audio/webm;codecs=opus'),
+  'webm': typeof MediaRecorder !== 'undefined' && MediaRecorder.isTypeSupported('audio/webm'),
+  'mp4': typeof MediaRecorder !== 'undefined' && MediaRecorder.isTypeSupported('audio/mp4'),
+});
