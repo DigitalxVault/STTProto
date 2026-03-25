@@ -9,21 +9,21 @@ See: .planning/PROJECT.md (updated 2026-03-25)
 
 ## Current Position
 
-Phase: 4 of 4 (Pipeline Integration) — PROJECT COMPLETE
-Plan: 1 of 1 in current phase
-Status: All phases complete — PTT transcription prototype shipped
-Last activity: 2026-03-25 — Completed 04-01-PLAN.md (Pipeline integration: audio-captured → /api/transcribe → transcript panel)
+Phase: 4.1 of 4.1 (Real-time Transcription + Layout Fix)
+Plan: 1 of 2 in current phase
+Status: In progress — Layout fix complete, Realtime API integration pending
+Last activity: 2026-03-25 — Completed 04.1-01-PLAN.md (Bottom-anchored transcript layout: fixed bottom-bar, column-reverse transcript)
 
-Progress: [██████████] 100%
+Progress: [███████░░░] 70%
 
-_(6 of 6 plans complete across all phases)_
+_(7 of 8 plans complete across all phases — Phase 4.1 Plan 1 done, Plan 2 pending)_
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 6
-- Average duration: ~3 min
-- Total execution time: ~0.3 hours
+- Total plans completed: 7
+- Average duration: ~2.5 min
+- Total execution time: ~0.32 hours
 
 **By Phase:**
 
@@ -33,10 +33,11 @@ _(6 of 6 plans complete across all phases)_
 | 02-audio-capture | 2/2 done | ~2 min | ~1 min |
 | 03-vercel-proxy | 1/1 done | ~5 min | ~5 min |
 | 04-pipeline-integration | 1/1 done | ~3 min | ~3 min |
+| 04.1-realtime-transcription-layout | 1/2 done | ~1 min | ~1 min |
 
 **Recent Trend:**
-- Last 6 plans: ~10 min, ~2 min, ~1 min, ~1 min, ~5 min, ~3 min
-- Trend: Stable fast — PROJECT COMPLETE
+- Last 7 plans: ~10 min, ~2 min, ~1 min, ~1 min, ~5 min, ~3 min, ~1 min
+- Trend: Stable fast
 
 *Updated after each plan completion*
 
@@ -80,6 +81,11 @@ Recent decisions affecting current work:
 - [04-01]: textContent-only DOM writes in transcript panel to prevent XSS
 - [04-01]: addTranscriptError calls showStatusTemp for status bar flash in addition to transcript panel entry
 - [04-01]: [STT] prefix used for pipeline integration logs, [PTT] prefix for audio capture logs
+- [04.1-01]: Single .bottom-bar fixed wrapper consolidates safe-area handling and positions transcript-panel left, mic-container right
+- [04.1-01]: flex-direction: column-reverse on transcript-panel — new entries grow upward with zero JS scroll management
+- [04.1-01]: pointer-events: none on bottom-bar, auto on children — prevents fixed layer blocking taps on page content
+- [04.1-01]: .state-demo CSS removed — Phase 1 verification strip no longer needed in production
+- [04.1-01]: transcript-panel background transparent, text-shadow on entries for legibility on dark background
 
 ### Roadmap Evolution
 
@@ -87,7 +93,7 @@ Recent decisions affecting current work:
 
 ### Pending Todos
 
-- Phase 4.1 needs planning and execution: replace batch Whisper with OpenAI Realtime API WebSocket, fix layout to bottom-anchored transcript
+- Phase 4.1 Plan 02: replace batch Whisper with OpenAI Realtime API WebSocket streaming
 
 ### Blockers/Concerns
 
@@ -96,6 +102,6 @@ Recent decisions affecting current work:
 
 ## Session Continuity
 
-Last session: 2026-03-25T05:38:50Z
-Stopped at: Completed 04-01-PLAN.md — Pipeline integration: audio-captured → /api/transcribe → transcript panel. PROJECT COMPLETE.
+Last session: 2026-03-25T09:04:58Z
+Stopped at: Completed 04.1-01-PLAN.md — Bottom-anchored transcript layout with fixed bottom-bar and column-reverse flex.
 Resume file: None
