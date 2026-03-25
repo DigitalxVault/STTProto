@@ -73,9 +73,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | AUD-02 | Phase 2 | Complete |
 | AUD-03 | Phase 2 | Complete |
 | STT-01 | Phase 4 | Pending |
-| STT-02 | Phase 3 | Pending |
+| STT-02 | Phase 3 | Complete |
 | STT-03 | Phase 4 | Pending |
-| STT-04 | Phase 3 | Pending |
+| STT-04 | Phase 3 | Complete |
 | UI-01 | Phase 1 | Complete |
 | UI-02 | Phase 1 | Complete |
 | UI-03 | Phase 1 | Complete |
