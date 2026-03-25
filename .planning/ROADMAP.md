@@ -58,10 +58,10 @@ Plans:
   1. POST to /api/transcribe with a real audio file returns { text: "..." } within 30 seconds
   2. OPENAI_API_KEY exists only in Vercel environment variables and never appears in client-side code
   3. Endpoint is verifiable independently via curl or Postman before any frontend integration
-**Plans**: TBD
+**Plans**: 1 plan
 
 Plans:
-- [ ] 03-01: api/transcribe.js serverless function with FormData parsing, Whisper call, and JSON response
+- [ ] 03-01-PLAN.md — package.json + .env.example setup, api/transcribe.js serverless function with FormData parsing, Whisper call via toFile, and vercel.json maxDuration config
 
 ### Phase 4: Pipeline Integration
 **Goal**: Users can press-and-hold to speak, release, and immediately see their words appear as a new line in the transcript panel
