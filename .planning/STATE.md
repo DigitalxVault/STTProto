@@ -5,25 +5,25 @@
 See: .planning/PROJECT.md (updated 2026-03-25)
 
 **Core value:** Push-to-talk produces accurate, immediate transcription so users can see exactly what they said and self-correct their RT discipline
-**Current focus:** Phase 4 — Integration (Phase 3 complete)
+**Current focus:** Phase 4 — Pipeline Integration COMPLETE — PROJECT SHIPPED
 
 ## Current Position
 
-Phase: 3 of 4 (Vercel Proxy) — Phase complete
+Phase: 4 of 4 (Pipeline Integration) — PROJECT COMPLETE
 Plan: 1 of 1 in current phase
-Status: Phase complete — ready for Phase 4
-Last activity: 2026-03-25 — Completed 03-01-PLAN.md (Vercel proxy: POST /api/transcribe with OpenAI Whisper)
+Status: All phases complete — PTT transcription prototype shipped
+Last activity: 2026-03-25 — Completed 04-01-PLAN.md (Pipeline integration: audio-captured → /api/transcribe → transcript panel)
 
-Progress: [█████░░░░░] 50%
+Progress: [██████████] 100%
 
-_(5 of ~10 plans complete across all phases)_
+_(6 of 6 plans complete across all phases)_
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 5
+- Total plans completed: 6
 - Average duration: ~3 min
-- Total execution time: ~0.2 hours
+- Total execution time: ~0.3 hours
 
 **By Phase:**
 
@@ -32,10 +32,11 @@ _(5 of ~10 plans complete across all phases)_
 | 01-shell-pwa | 2/2 done | ~12 min | ~6 min |
 | 02-audio-capture | 2/2 done | ~2 min | ~1 min |
 | 03-vercel-proxy | 1/1 done | ~5 min | ~5 min |
+| 04-pipeline-integration | 1/1 done | ~3 min | ~3 min |
 
 **Recent Trend:**
-- Last 5 plans: ~10 min, ~2 min, ~1 min, ~1 min, ~5 min
-- Trend: Stable fast
+- Last 6 plans: ~10 min, ~2 min, ~1 min, ~1 min, ~5 min, ~3 min
+- Trend: Stable fast — PROJECT COMPLETE
 
 *Updated after each plan completion*
 
@@ -74,20 +75,23 @@ Recent decisions affecting current work:
 - [03-01]: MIME-to-ext map covers webm/mp4/ogg/wav/mp3 with webm default
 - [03-01]: maxDuration: 30s in vercel.json — Whisper can take 10-20s; leaves headroom
 - [03-01]: No CORS headers added — Phase 4 integration is same-origin
+- [04-01]: setState('idle') removed from recorder.onstop after CustomEvent dispatch — idle ownership transferred to transcribeAndDisplay so PROCESSING spinner persists through full API round-trip
+- [04-01]: Content-Type header omitted from fetch — browser sets correct multipart/form-data boundary automatically
+- [04-01]: textContent-only DOM writes in transcript panel to prevent XSS
+- [04-01]: addTranscriptError calls showStatusTemp for status bar flash in addition to transcript panel entry
+- [04-01]: [STT] prefix used for pipeline integration logs, [PTT] prefix for audio capture logs
 
 ### Pending Todos
 
-- Phase 3 complete. Ready to execute Phase 4 (frontend integration: wire audio-captured event → /api/transcribe → display text).
-- User must set OPENAI_API_KEY in .env (local) and Vercel Dashboard (production) before endpoint is usable.
+- PROJECT COMPLETE. Deploy to Vercel and configure OPENAI_API_KEY to use in production.
 
 ### Blockers/Concerns
 
-- [Research]: iOS 16/17 device availability for testing — silent audio bug is most severe on older iOS; need to clarify target device baseline during Phase 2 planning
+- [Setup]: OPENAI_API_KEY must be configured in .env (local) and Vercel Dashboard (production) before /api/transcribe returns real transcriptions
 - [Research]: Vercel Hobby plan timeout may cap maxDuration at 10s despite 30s config — confirm in Vercel dashboard before production deployment
-- [Setup]: OPENAI_API_KEY must be configured before /api/transcribe can be tested or deployed
 
 ## Session Continuity
 
-Last session: 2026-03-25T05:25:00Z
-Stopped at: Completed 03-01-PLAN.md — Vercel proxy with POST /api/transcribe, 5-guard validation, toFile Whisper conversion, vercel.json maxDuration.
+Last session: 2026-03-25T05:38:50Z
+Stopped at: Completed 04-01-PLAN.md — Pipeline integration: audio-captured → /api/transcribe → transcript panel. PROJECT COMPLETE.
 Resume file: None
