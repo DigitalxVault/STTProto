@@ -108,6 +108,11 @@ body {
   text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
 }
 
+.transcript-live {
+  opacity: 0.6;
+  font-style: italic;
+}
+
 .transcript-error {
   margin-bottom: 0.4rem;
   color: var(--text-dim);

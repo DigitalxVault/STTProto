@@ -1,6 +1,6 @@
 'use strict';
 
-// RADStrat RT Trainer — App Shell + PTT Audio Capture
+// RADStrat RT Trainer — Realtime Transcription via OpenAI Realtime API
 
 // ── Service Worker ────────────────────────────────────────────────────────────
 if ('serviceWorker' in navigator) {
@@ -16,8 +16,12 @@ const transcriptPanel = document.querySelector('.transcript-panel');
 
 // ── State ─────────────────────────────────────────────────────────────────────
 let stream = null;
-let recorder = null;
-let chunks = [];
+let ws = null;           // WebSocket to OpenAI Realtime API
+let audioCtx = null;     // AudioContext at 24kHz
+let workletNode = null;  // AudioWorklet node
+let sourceNode = null;   // MediaStreamSource node
+let currentDelta = '';   // Accumulates partial transcript deltas
+let liveEl = null;       // Live transcript element for current utterance
 
 // ── setState ──────────────────────────────────────────────────────────────────
 function setState(state) {
@@ -54,12 +58,7 @@ async function acquireMic() {
   }
   try {
     stream = await navigator.mediaDevices.getUserMedia({
-      audio: {
-        channelCount: 1,
-        echoCancellation: true,
-        noiseSuppression: true,
-        autoGainControl: true,
-      },
+      audio: { channelCount: 1 },
     });
     return stream;
   } catch (err) {
@@ -75,94 +74,237 @@ async function acquireMic() {
   }
 }
 
-// ── MediaRecorder Lifecycle ───────────────────────────────────────────────────
-function detectMimeType() {
-  const candidates = [
-    'audio/webm;codecs=opus',
-    'audio/webm',
-    'audio/mp4',
-    '',
-  ];
-  for (var i = 0; i < candidates.length; i++) {
-    if (candidates[i] === '' || MediaRecorder.isTypeSupported(candidates[i])) {
-      return candidates[i];
-    }
+// ── Transcript Helpers ─────────────────────────────────────────────────────────
+function addTranscriptEntry(text) {
+  var placeholder = transcriptPanel.querySelector('.transcript-placeholder');
+  if (placeholder) {
+    transcriptPanel.removeChild(placeholder);
   }
-  return '';
+  var p = document.createElement('p');
+  p.textContent = text;
+  p.classList.add('transcript-entry');
+  transcriptPanel.appendChild(p);
 }
 
-function startRecording(mediaStream) {
-  chunks = [];
-  const mimeType = detectMimeType();
-  const options = mimeType ? { mimeType: mimeType } : {};
+function addTranscriptError(label) {
+  var placeholder = transcriptPanel.querySelector('.transcript-placeholder');
+  if (placeholder) {
+    transcriptPanel.removeChild(placeholder);
+  }
+  var p = document.createElement('p');
+  p.textContent = '[ERR] ' + label;
+  p.classList.add('transcript-error');
+  transcriptPanel.appendChild(p);
+  showStatusTemp(label, '#cc4444', 4000);
+}
 
-  console.log('[PTT] Using MIME:', mimeType || 'browser default');
+// ── Realtime Session ──────────────────────────────────────────────────────────
+async function startRealtimeSession(mediaStream) {
+  setState('processing'); // Show spinner during connection setup
 
-  recorder = new MediaRecorder(mediaStream, options);
-
-  recorder.ondataavailable = function (e) {
-    if (e.data && e.data.size > 0) {
-      chunks.push(e.data);
-    }
-  };
-
-  recorder.onerror = function (e) {
-    console.error('[PTT] MediaRecorder error:', e.error || e);
+  // 1. Fetch ephemeral token
+  let tokenData;
+  try {
+    const res = await fetch('/api/session', { method: 'POST' });
+    if (!res.ok) throw new Error('Token request failed: ' + res.status);
+    tokenData = await res.json();
+  } catch (err) {
+    console.error('[STT] Token fetch failed:', err);
+    addTranscriptError('SESSION ERROR');
     setState('idle');
-  };
+    return;
+  }
 
-  recorder.onstop = function () {
-    const blobType = mimeType || 'audio/webm';
-    const blob = new Blob(chunks, { type: blobType });
+  const token = tokenData.client_secret.value;
+  console.log('[STT] Ephemeral token acquired');
 
-    console.log('[PTT] Blob ready:', { size: blob.size, type: blob.type, chunks: chunks.length });
+  // 2. Open WebSocket with token as subprotocol
+  const wsUrl = 'wss://api.openai.com/v1/realtime?intent=transcription';
+  ws = new WebSocket(wsUrl, [
+    'realtime',
+    'openai-insecure-api-key.' + token,
+    'openai-beta.realtime-v1',
+  ]);
 
-    if (blob.size === 0) {
-      console.warn('[PTT] Audio blob is empty — recording may have been too short.');
-      setState('idle');
-      return;
-    }
+  ws.onopen = function () {
+    console.log('[STT] WebSocket connected');
 
-    console.log('[PTT] Dispatching audio-captured event:', blob.size, 'bytes,', blob.type);
-    micBtn.dispatchEvent(new CustomEvent('audio-captured', {
-      bubbles: true,
-      detail: { blob: blob },
+    // 3. Send session config
+    ws.send(JSON.stringify({
+      type: 'transcription_session.update',
+      session: {
+        input_audio_format: 'pcm16',
+        input_audio_transcription: {
+          model: 'gpt-4o-mini-transcribe',
+          language: 'en',
+        },
+        turn_detection: {
+          type: 'server_vad',
+          silence_duration_ms: 200,
+        },
+      },
     }));
 
-    // Phase 4: idle transition owned by audio-captured listener
+    // 4. Start audio streaming
+    startAudioStreaming(mediaStream);
+    setState('recording'); // Switch from spinner to recording state
   };
 
-  try {
-    recorder.start();
-    setState('recording');
-  } catch (err) {
-    console.error('[PTT] recorder.start() failed:', err);
-    recorder = null;
+  ws.onmessage = function (event) {
+    handleRealtimeEvent(JSON.parse(event.data));
+  };
+
+  ws.onerror = function (err) {
+    console.error('[STT] WebSocket error:', err);
+    addTranscriptError('CONNECTION ERROR');
+    stopRealtimeSession();
     setState('idle');
+  };
+
+  ws.onclose = function (event) {
+    console.log('[STT] WebSocket closed:', event.code, event.reason);
+    // Clean up audio nodes if still connected
+    cleanupAudio();
+  };
+}
+
+async function startAudioStreaming(mediaStream) {
+  // Create AudioContext at 24kHz (required by Realtime API)
+  audioCtx = new AudioContext({ sampleRate: 24000 });
+
+  // Load AudioWorklet
+  await audioCtx.audioWorklet.addModule('/audioProcessor.js');
+
+  // Create source from mic stream
+  sourceNode = audioCtx.createMediaStreamSource(mediaStream);
+
+  // Create worklet node
+  workletNode = new AudioWorkletNode(audioCtx, 'pcm16-processor');
+
+  // Handle PCM16 data from worklet
+  workletNode.port.onmessage = function (e) {
+    if (ws && ws.readyState === WebSocket.OPEN) {
+      // Convert ArrayBuffer to base64
+      const base64 = arrayBufferToBase64(e.data);
+      ws.send(JSON.stringify({
+        type: 'input_audio_buffer.append',
+        audio: base64,
+      }));
+    }
+  };
+
+  // Connect mic -> worklet -> silent gain node (no playback feedback)
+  sourceNode.connect(workletNode);
+  var silentGain = audioCtx.createGain();
+  silentGain.gain.value = 0;
+  workletNode.connect(silentGain);
+  silentGain.connect(audioCtx.destination);
+
+  console.log('[STT] Audio streaming started at 24kHz');
+}
+
+function arrayBufferToBase64(buffer) {
+  var bytes = new Uint8Array(buffer);
+  var binary = '';
+  for (var i = 0; i < bytes.length; i++) {
+    binary += String.fromCharCode(bytes[i]);
+  }
+  return btoa(binary);
+}
+
+function handleRealtimeEvent(event) {
+  console.log('[STT] Event:', event.type);
+
+  switch (event.type) {
+    case 'conversation.item.input_audio_transcription.delta':
+      // Partial transcript — accumulate and show live
+      currentDelta += event.delta;
+      if (!liveEl) {
+        liveEl = document.createElement('p');
+        liveEl.classList.add('transcript-entry', 'transcript-live');
+        var placeholder = transcriptPanel.querySelector('.transcript-placeholder');
+        if (placeholder) transcriptPanel.removeChild(placeholder);
+        transcriptPanel.appendChild(liveEl);
+      }
+      liveEl.textContent = currentDelta;
+      break;
+
+    case 'conversation.item.input_audio_transcription.completed':
+      // Final transcript for this segment
+      if (liveEl) {
+        liveEl.classList.remove('transcript-live');
+        liveEl.textContent = event.transcript || currentDelta;
+        liveEl = null;
+      } else if (event.transcript) {
+        addTranscriptEntry(event.transcript);
+      }
+      currentDelta = '';
+      break;
+
+    case 'error':
+      console.error('[STT] Realtime API error:', event.error);
+      if (event.error && event.error.message) {
+        addTranscriptError('API: ' + event.error.message);
+      }
+      break;
+
+    default:
+      // Ignore other events (session.created, session.updated, etc.)
+      break;
   }
 }
 
-function stopRecording() {
-  if (recorder && recorder.state === 'recording') {
-    recorder.stop();
-    setState('processing');
+function cleanupAudio() {
+  if (sourceNode) {
+    sourceNode.disconnect();
+    sourceNode = null;
   }
+  if (workletNode) {
+    workletNode.disconnect();
+    workletNode = null;
+  }
+  if (audioCtx && audioCtx.state !== 'closed') {
+    audioCtx.close();
+    audioCtx = null;
+  }
+}
+
+function stopRealtimeSession() {
+  // Send commit to force final transcription of any remaining audio
+  if (ws && ws.readyState === WebSocket.OPEN) {
+    ws.send(JSON.stringify({ type: 'input_audio_buffer.commit' }));
+    console.log('[STT] Audio buffer committed');
+
+    // Give server a moment to send final transcript, then close
+    setTimeout(function () {
+      if (ws && ws.readyState === WebSocket.OPEN) {
+        ws.close();
+      }
+      ws = null;
+      setState('idle');
+    }, 1500);
+  } else {
+    ws = null;
+    setState('idle');
+  }
+
+  cleanupAudio();
 }
 
 // ── PTT Handlers ──────────────────────────────────────────────────────────────
 async function handlePressStart(e) {
   const mediaStream = await acquireMic();
   if (!mediaStream) return;
-  startRecording(mediaStream);
+  startRealtimeSession(mediaStream);
 }
 
 function handlePressEnd() {
-  // Rapid tap guard: if no active recording, just reset to idle
-  if (!recorder || recorder.state !== 'recording') {
+  // If no active WebSocket session, just reset
+  if (!ws || ws.readyState !== WebSocket.OPEN) {
     setState('idle');
     return;
   }
-  stopRecording();
+  stopRealtimeSession();
 }
 
 // ── Pointer Events ────────────────────────────────────────────────────────────
@@ -180,74 +322,8 @@ micBtn.addEventListener('pointercancel', function () {
   handlePressEnd();
 });
 
-// -- Pipeline Integration ──────────────────────────────────────────────────────
-function addTranscriptEntry(text) {
-  var placeholder = transcriptPanel.querySelector('.transcript-placeholder');
-  if (placeholder) {
-    transcriptPanel.removeChild(placeholder);
-  }
-  var p = document.createElement('p');
-  p.textContent = text;
-  p.classList.add('transcript-entry');
-  transcriptPanel.appendChild(p);
-  transcriptPanel.scrollTop = transcriptPanel.scrollHeight;
-}
-
-function addTranscriptError(label) {
-  var placeholder = transcriptPanel.querySelector('.transcript-placeholder');
-  if (placeholder) {
-    transcriptPanel.removeChild(placeholder);
-  }
-  var p = document.createElement('p');
-  p.textContent = '[ERR] ' + label;
-  p.classList.add('transcript-error');
-  transcriptPanel.appendChild(p);
-  transcriptPanel.scrollTop = transcriptPanel.scrollHeight;
-  showStatusTemp(label, '#cc4444', 4000);
-}
-
-async function transcribeAndDisplay(blob) {
-  var ext = blob.type.includes('mp4') ? 'mp4' : 'webm';
-  var formData = new FormData();
-  formData.append('file', blob, 'audio.' + ext);
-
-  var response;
-  try {
-    response = await fetch('/api/transcribe', { method: 'POST', body: formData });
-  } catch (err) {
-    console.error('[STT] Network error:', err);
-    addTranscriptError('NETWORK ERROR');
-    setState('idle');
-    return;
-  }
-
-  if (!response.ok) {
-    var errBody = await response.json().catch(function () { return {}; });
-    console.error('[STT] API error:', errBody);
-    addTranscriptError('TRANSCRIPTION FAILED');
-    setState('idle');
-    return;
-  }
-
-  var data = await response.json();
-  if (data.text) {
-    addTranscriptEntry(data.text);
-  }
-  setState('idle');
-}
-
-document.addEventListener('audio-captured', function (e) {
-  transcribeAndDisplay(e.detail.blob);
-});
-
 // ── Diagnostics ───────────────────────────────────────────────────────────────
-console.log('[PTT] Audio capture module loaded');
-console.log('[STT] Pipeline integration loaded');
-console.log('[PTT] MediaRecorder supported:', typeof MediaRecorder !== 'undefined');
-console.log('[PTT] Pointer Events supported:', typeof PointerEvent !== 'undefined');
-console.log('[PTT] Display mode:', (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone) ? 'standalone' : 'browser');
-console.log('[PTT] MIME support:', {
-  'webm/opus': typeof MediaRecorder !== 'undefined' && MediaRecorder.isTypeSupported('audio/webm;codecs=opus'),
-  'webm': typeof MediaRecorder !== 'undefined' && MediaRecorder.isTypeSupported('audio/webm'),
-  'mp4': typeof MediaRecorder !== 'undefined' && MediaRecorder.isTypeSupported('audio/mp4'),
-});
+console.log('[STT] Realtime transcription module loaded');
+console.log('[STT] AudioWorklet supported:', typeof AudioWorkletNode !== 'undefined');
+console.log('[STT] WebSocket supported:', typeof WebSocket !== 'undefined');
+console.log('[STT] Display mode:', (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone) ? 'standalone' : 'browser');
