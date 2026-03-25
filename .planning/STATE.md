@@ -10,27 +10,29 @@ See: .planning/PROJECT.md (updated 2026-03-25)
 ## Current Position
 
 Phase: 1 of 4 (Shell + PWA)
-Plan: 0 of 2 in current phase
-Status: Ready to plan
-Last activity: 2026-03-25 — Roadmap created (4 phases, 13/13 requirements mapped)
+Plan: 1 of 2 in current phase
+Status: In progress
+Last activity: 2026-03-25 — Completed 01-01-PLAN.md (App Shell: index.html, style.css, app.js)
 
-Progress: [░░░░░░░░░░] 0%
+Progress: [█░░░░░░░░░] 10%
+
+_(1 of ~10 plans complete across all phases)_
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 0
-- Average duration: — min
-- Total execution time: 0 hours
+- Total plans completed: 1
+- Average duration: 1 min
+- Total execution time: 0.02 hours
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
-| - | - | - | - |
+| 01-shell-pwa | 1/2 done | 1 min | 1 min |
 
 **Recent Trend:**
-- Last 5 plans: —
+- Last 5 plans: 1 min
 - Trend: —
 
 *Updated after each plan completion*
@@ -44,10 +46,15 @@ Recent decisions affecting current work:
 
 - [Roadmap]: Phases 2 and 3 are independently buildable in parallel — audio capture and Vercel proxy can be built simultaneously before Phase 4 integration
 - [Roadmap]: Phase 1 must produce an installable PWA before Phase 2 starts — iOS standalone-mode audio bug (WebKit #185448) is only reproducible in installed PWA mode, so installability must be confirmed first
+- [01-01]: Mic button is bottom-right aligned (flex-end) per user reference image — not centered
+- [01-01]: Omit apple-mobile-web-app-capable meta tag per web.dev — breaks PWA behavior on modern iOS
+- [01-01]: Use 100dvh (not 100vh) to handle iOS Safari dynamic viewport bar clipping
+- [01-01]: Button state machine: swap state-idle / state-recording / state-processing classes on .mic-btn
+- [01-01]: Phase 1 demo strip included in HTML to verify all three states render without JS
 
 ### Pending Todos
 
-None yet.
+- Plan 02 (manifest.json, icons, installability) is ready to execute
 
 ### Blockers/Concerns
 
@@ -56,6 +63,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-25
-Stopped at: Roadmap created, ready to plan Phase 1
+Last session: 2026-03-25T04:15:27Z
+Stopped at: Completed 01-01-PLAN.md — App shell (index.html, style.css, app.js) committed
 Resume file: None
