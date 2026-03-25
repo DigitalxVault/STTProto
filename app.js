@@ -12,6 +12,7 @@ if ('serviceWorker' in navigator) {
 // ── DOM References ────────────────────────────────────────────────────────────
 const micBtn = document.querySelector('.mic-btn');
 const statusIndicator = document.querySelector('.status-indicator');
+const transcriptPanel = document.querySelector('.transcript-panel');
 
 // ── State ─────────────────────────────────────────────────────────────────────
 let stream = null;
@@ -128,7 +129,7 @@ function startRecording(mediaStream) {
       detail: { blob: blob },
     }));
 
-    setState('idle');
+    // Phase 4: idle transition owned by audio-captured listener
   };
 
   try {
@@ -179,8 +180,69 @@ micBtn.addEventListener('pointercancel', function () {
   handlePressEnd();
 });
 
+// -- Pipeline Integration ──────────────────────────────────────────────────────
+function addTranscriptEntry(text) {
+  var placeholder = transcriptPanel.querySelector('.transcript-placeholder');
+  if (placeholder) {
+    transcriptPanel.removeChild(placeholder);
+  }
+  var p = document.createElement('p');
+  p.textContent = text;
+  p.classList.add('transcript-entry');
+  transcriptPanel.appendChild(p);
+  transcriptPanel.scrollTop = transcriptPanel.scrollHeight;
+}
+
+function addTranscriptError(label) {
+  var placeholder = transcriptPanel.querySelector('.transcript-placeholder');
+  if (placeholder) {
+    transcriptPanel.removeChild(placeholder);
+  }
+  var p = document.createElement('p');
+  p.textContent = '[ERR] ' + label;
+  p.classList.add('transcript-error');
+  transcriptPanel.appendChild(p);
+  transcriptPanel.scrollTop = transcriptPanel.scrollHeight;
+  showStatusTemp(label, '#cc4444', 4000);
+}
+
+async function transcribeAndDisplay(blob) {
+  var ext = blob.type.includes('mp4') ? 'mp4' : 'webm';
+  var formData = new FormData();
+  formData.append('file', blob, 'audio.' + ext);
+
+  var response;
+  try {
+    response = await fetch('/api/transcribe', { method: 'POST', body: formData });
+  } catch (err) {
+    console.error('[STT] Network error:', err);
+    addTranscriptError('NETWORK ERROR');
+    setState('idle');
+    return;
+  }
+
+  if (!response.ok) {
+    var errBody = await response.json().catch(function () { return {}; });
+    console.error('[STT] API error:', errBody);
+    addTranscriptError('TRANSCRIPTION FAILED');
+    setState('idle');
+    return;
+  }
+
+  var data = await response.json();
+  if (data.text) {
+    addTranscriptEntry(data.text);
+  }
+  setState('idle');
+}
+
+document.addEventListener('audio-captured', function (e) {
+  transcribeAndDisplay(e.detail.blob);
+});
+
 // ── Diagnostics ───────────────────────────────────────────────────────────────
 console.log('[PTT] Audio capture module loaded');
+console.log('[STT] Pipeline integration loaded');
 console.log('[PTT] MediaRecorder supported:', typeof MediaRecorder !== 'undefined');
 console.log('[PTT] Pointer Events supported:', typeof PointerEvent !== 'undefined');
 console.log('[PTT] Display mode:', (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone) ? 'standalone' : 'browser');
