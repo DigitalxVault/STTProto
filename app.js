@@ -30,9 +30,26 @@ function setState(state) {
 }
 
 // ── Mic Acquisition ───────────────────────────────────────────────────────────
+function showStatusTemp(text, color, durationMs) {
+  if (!statusIndicator) return;
+  var prevText = statusIndicator.textContent;
+  var prevColor = statusIndicator.style.color;
+  statusIndicator.textContent = '\u25a0 ' + text;
+  statusIndicator.style.color = color;
+  setTimeout(function () {
+    statusIndicator.textContent = prevText;
+    statusIndicator.style.color = prevColor;
+  }, durationMs);
+}
+
 async function acquireMic() {
-  if (stream && stream.getTracks().every(function (t) { return t.readyState === 'live'; })) {
+  // Check if cached stream has live audio tracks
+  if (stream && stream.getAudioTracks().every(function (t) { return t.readyState === 'live'; })) {
     return stream;
+  }
+  // If stream exists but tracks are dead, clear it and re-acquire
+  if (stream) {
+    stream = null;
   }
   try {
     stream = await navigator.mediaDevices.getUserMedia({
@@ -46,6 +63,13 @@ async function acquireMic() {
     return stream;
   } catch (err) {
     console.error('Mic acquisition failed:', err);
+    stream = null;
+    if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+      showStatusTemp('MIC BLOCKED', 'red', 3000);
+    } else {
+      showStatusTemp('MIC ERROR', 'red', 3000);
+    }
+    setState('idle');
     return null;
   }
 }
@@ -71,6 +95,8 @@ function startRecording(mediaStream) {
   const mimeType = detectMimeType();
   const options = mimeType ? { mimeType: mimeType } : {};
 
+  console.log('[PTT] Using MIME:', mimeType || 'browser default');
+
   recorder = new MediaRecorder(mediaStream, options);
 
   recorder.ondataavailable = function (e) {
@@ -79,17 +105,24 @@ function startRecording(mediaStream) {
     }
   };
 
+  recorder.onerror = function (e) {
+    console.error('[PTT] MediaRecorder error:', e.error || e);
+    setState('idle');
+  };
+
   recorder.onstop = function () {
     const blobType = mimeType || 'audio/webm';
     const blob = new Blob(chunks, { type: blobType });
 
+    console.log('[PTT] Blob ready:', { size: blob.size, type: blob.type, chunks: chunks.length });
+
     if (blob.size === 0) {
-      console.warn('Audio blob is empty — recording may have been too short.');
+      console.warn('[PTT] Audio blob is empty — recording may have been too short.');
       setState('idle');
       return;
     }
 
-    console.log('Audio captured:', blob.size, 'bytes,', blob.type);
+    console.log('[PTT] Dispatching audio-captured event:', blob.size, 'bytes,', blob.type);
     micBtn.dispatchEvent(new CustomEvent('audio-captured', {
       bubbles: true,
       detail: { blob: blob },
@@ -98,8 +131,14 @@ function startRecording(mediaStream) {
     setState('idle');
   };
 
-  recorder.start();
-  setState('recording');
+  try {
+    recorder.start();
+    setState('recording');
+  } catch (err) {
+    console.error('[PTT] recorder.start() failed:', err);
+    recorder = null;
+    setState('idle');
+  }
 }
 
 function stopRecording() {
@@ -117,6 +156,11 @@ async function handlePressStart(e) {
 }
 
 function handlePressEnd() {
+  // Rapid tap guard: if no active recording, just reset to idle
+  if (!recorder || recorder.state !== 'recording') {
+    setState('idle');
+    return;
+  }
   stopRecording();
 }
 
