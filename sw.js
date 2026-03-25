@@ -1,7 +1,7 @@
 // RADStrat RT Trainer — Service Worker
 // Cache-first strategy for app shell offline support.
 
-const CACHE_NAME = 'rt-trainer-v2';
+const CACHE_NAME = 'rt-trainer-v3';
 
 const PRECACHE_URLS = [
   '/',
