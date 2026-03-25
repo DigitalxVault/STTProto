@@ -1,6 +1,6 @@
 'use strict';
 
-// RADStrat RT Trainer — Realtime Transcription via OpenAI Realtime API
+// RADStrat RT Trainer — Live Speech-to-Text via Web Speech API
 
 // ── Service Worker ────────────────────────────────────────────────────────────
 if ('serviceWorker' in navigator) {
@@ -10,31 +10,27 @@ if ('serviceWorker' in navigator) {
 }
 
 // ── DOM References ────────────────────────────────────────────────────────────
-const micBtn = document.querySelector('.mic-btn');
-const statusIndicator = document.querySelector('.status-indicator');
-const transcriptPanel = document.querySelector('.transcript-panel');
+var micBtn = document.querySelector('.mic-btn');
+var statusIndicator = document.querySelector('.status-indicator');
+var transcriptPanel = document.querySelector('.transcript-panel');
 
 // ── State ─────────────────────────────────────────────────────────────────────
-let stream = null;
-let ws = null;           // WebSocket to OpenAI Realtime API
-let audioCtx = null;     // AudioContext at 24kHz
-let workletNode = null;  // AudioWorklet node
-let sourceNode = null;   // MediaStreamSource node
-let currentDelta = '';   // Accumulates partial transcript deltas
-let liveEl = null;       // Live transcript element for current utterance
+var recognition = null;
+var liveEl = null;       // Current live transcript element (updates as you speak)
+var isListening = false;
 
 // ── setState ──────────────────────────────────────────────────────────────────
 function setState(state) {
   micBtn.classList.remove('state-idle', 'state-recording', 'state-processing');
   micBtn.classList.add('state-' + state);
 
-  const labels = { idle: 'STANDBY', recording: 'REC', processing: 'PROCESSING' };
+  var labels = { idle: 'STANDBY', recording: 'REC', processing: 'PROCESSING' };
   if (statusIndicator) {
     statusIndicator.textContent = '\u25a0 ' + (labels[state] || state.toUpperCase());
   }
 }
 
-// ── Mic Acquisition ───────────────────────────────────────────────────────────
+// ── Status Temp ───────────────────────────────────────────────────────────────
 function showStatusTemp(text, color, durationMs) {
   if (!statusIndicator) return;
   var prevText = statusIndicator.textContent;
@@ -47,39 +43,14 @@ function showStatusTemp(text, color, durationMs) {
   }, durationMs);
 }
 
-async function acquireMic() {
-  // Check if cached stream has live audio tracks
-  if (stream && stream.getAudioTracks().every(function (t) { return t.readyState === 'live'; })) {
-    return stream;
-  }
-  // If stream exists but tracks are dead, clear it and re-acquire
-  if (stream) {
-    stream = null;
-  }
-  try {
-    stream = await navigator.mediaDevices.getUserMedia({
-      audio: { channelCount: 1 },
-    });
-    return stream;
-  } catch (err) {
-    console.error('Mic acquisition failed:', err);
-    stream = null;
-    if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
-      showStatusTemp('MIC BLOCKED', 'red', 3000);
-    } else {
-      showStatusTemp('MIC ERROR', 'red', 3000);
-    }
-    setState('idle');
-    return null;
-  }
+// ── Transcript Helpers ────────────────────────────────────────────────────────
+function removePlaceholder() {
+  var placeholder = transcriptPanel.querySelector('.transcript-placeholder');
+  if (placeholder) transcriptPanel.removeChild(placeholder);
 }
 
-// ── Transcript Helpers ─────────────────────────────────────────────────────────
 function addTranscriptEntry(text) {
-  var placeholder = transcriptPanel.querySelector('.transcript-placeholder');
-  if (placeholder) {
-    transcriptPanel.removeChild(placeholder);
-  }
+  removePlaceholder();
   var p = document.createElement('p');
   p.textContent = text;
   p.classList.add('transcript-entry');
@@ -87,10 +58,7 @@ function addTranscriptEntry(text) {
 }
 
 function addTranscriptError(label) {
-  var placeholder = transcriptPanel.querySelector('.transcript-placeholder');
-  if (placeholder) {
-    transcriptPanel.removeChild(placeholder);
-  }
+  removePlaceholder();
   var p = document.createElement('p');
   p.textContent = '[ERR] ' + label;
   p.classList.add('transcript-error');
@@ -98,220 +66,132 @@ function addTranscriptError(label) {
   showStatusTemp(label, '#cc4444', 4000);
 }
 
-// ── Realtime Session ──────────────────────────────────────────────────────────
-async function startRealtimeSession(mediaStream) {
-  setState('processing'); // Show spinner during connection setup
+// ── Web Speech API — True Real-Time Transcription ─────────────────────────────
 
-  // 1. Fetch ephemeral token
-  let tokenData;
-  try {
-    const res = await fetch('/api/session', { method: 'POST' });
-    if (!res.ok) throw new Error('Token request failed: ' + res.status);
-    tokenData = await res.json();
-  } catch (err) {
-    console.error('[STT] Token fetch failed:', err);
-    addTranscriptError('SESSION ERROR');
+var SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+function startListening() {
+  if (!SpeechRecognition) {
+    addTranscriptError('SPEECH API NOT SUPPORTED');
     setState('idle');
     return;
   }
 
-  const token = tokenData.client_secret.value;
-  console.log('[STT] Ephemeral token acquired');
+  recognition = new SpeechRecognition();
+  recognition.continuous = true;
+  recognition.interimResults = true;  // This is what gives us live word-by-word updates
+  recognition.lang = 'en-US';
 
-  // 2. Open WebSocket with token as subprotocol
-  const wsUrl = 'wss://api.openai.com/v1/realtime?intent=transcription';
-  ws = new WebSocket(wsUrl, [
-    'realtime',
-    'openai-insecure-api-key.' + token,
-    'openai-beta.realtime-v1',
-  ]);
+  // Create a live element that will update word-by-word as you speak
+  removePlaceholder();
+  liveEl = document.createElement('p');
+  liveEl.classList.add('transcript-entry', 'transcript-live');
+  transcriptPanel.appendChild(liveEl);
 
-  ws.onopen = function () {
-    console.log('[STT] WebSocket connected');
+  recognition.onresult = function (event) {
+    var interimText = '';
+    var finalText = '';
 
-    // 3. Send session config
-    ws.send(JSON.stringify({
-      type: 'transcription_session.update',
-      session: {
-        input_audio_format: 'pcm16',
-        input_audio_transcription: {
-          model: 'gpt-4o-mini-transcribe',
-          language: 'en',
-        },
-        turn_detection: {
-          type: 'server_vad',
-          silence_duration_ms: 200,
-        },
-      },
-    }));
+    for (var i = event.resultIndex; i < event.results.length; i++) {
+      var transcript = event.results[i][0].transcript;
+      if (event.results[i].isFinal) {
+        finalText += transcript;
+      } else {
+        interimText += transcript;
+      }
+    }
 
-    // 4. Start audio streaming
-    startAudioStreaming(mediaStream);
-    setState('recording'); // Switch from spinner to recording state
-  };
+    // Final result — lock it in as a completed entry
+    if (finalText) {
+      if (liveEl) {
+        liveEl.classList.remove('transcript-live');
+        liveEl.textContent = finalText;
+        // Start a new live element for the next utterance
+        liveEl = document.createElement('p');
+        liveEl.classList.add('transcript-entry', 'transcript-live');
+        transcriptPanel.appendChild(liveEl);
+      }
+    }
 
-  ws.onmessage = function (event) {
-    handleRealtimeEvent(JSON.parse(event.data));
-  };
-
-  ws.onerror = function (err) {
-    console.error('[STT] WebSocket error:', err);
-    addTranscriptError('CONNECTION ERROR');
-    stopRealtimeSession();
-    setState('idle');
-  };
-
-  ws.onclose = function (event) {
-    console.log('[STT] WebSocket closed:', event.code, event.reason);
-    // Clean up audio nodes if still connected
-    cleanupAudio();
-  };
-}
-
-async function startAudioStreaming(mediaStream) {
-  // Create AudioContext at 24kHz (required by Realtime API)
-  audioCtx = new AudioContext({ sampleRate: 24000 });
-
-  // Load AudioWorklet
-  await audioCtx.audioWorklet.addModule('/audioProcessor.js');
-
-  // Create source from mic stream
-  sourceNode = audioCtx.createMediaStreamSource(mediaStream);
-
-  // Create worklet node
-  workletNode = new AudioWorkletNode(audioCtx, 'pcm16-processor');
-
-  // Handle PCM16 data from worklet
-  workletNode.port.onmessage = function (e) {
-    if (ws && ws.readyState === WebSocket.OPEN) {
-      // Convert ArrayBuffer to base64
-      const base64 = arrayBufferToBase64(e.data);
-      ws.send(JSON.stringify({
-        type: 'input_audio_buffer.append',
-        audio: base64,
-      }));
+    // Interim result — update the live element in real-time (word by word)
+    if (interimText && liveEl) {
+      liveEl.textContent = interimText;
     }
   };
 
-  // Connect mic -> worklet -> silent gain node (no playback feedback)
-  sourceNode.connect(workletNode);
-  var silentGain = audioCtx.createGain();
-  silentGain.gain.value = 0;
-  workletNode.connect(silentGain);
-  silentGain.connect(audioCtx.destination);
+  recognition.onerror = function (event) {
+    console.error('[STT] Recognition error:', event.error);
+    if (event.error === 'not-allowed') {
+      showStatusTemp('MIC BLOCKED', '#cc4444', 3000);
+    } else if (event.error !== 'aborted' && event.error !== 'no-speech') {
+      showStatusTemp('STT ERROR', '#cc4444', 3000);
+    }
+  };
 
-  console.log('[STT] Audio streaming started at 24kHz');
-}
-
-function arrayBufferToBase64(buffer) {
-  var bytes = new Uint8Array(buffer);
-  var binary = '';
-  for (var i = 0; i < bytes.length; i++) {
-    binary += String.fromCharCode(bytes[i]);
-  }
-  return btoa(binary);
-}
-
-function handleRealtimeEvent(event) {
-  console.log('[STT] Event:', event.type);
-
-  switch (event.type) {
-    case 'conversation.item.input_audio_transcription.delta':
-      // Partial transcript — accumulate and show live
-      currentDelta += event.delta;
-      if (!liveEl) {
-        liveEl = document.createElement('p');
-        liveEl.classList.add('transcript-entry', 'transcript-live');
-        var placeholder = transcriptPanel.querySelector('.transcript-placeholder');
-        if (placeholder) transcriptPanel.removeChild(placeholder);
-        transcriptPanel.appendChild(liveEl);
+  recognition.onend = function () {
+    // If still holding PTT, restart (browser may auto-stop)
+    if (isListening) {
+      try {
+        recognition.start();
+      } catch (e) {
+        // Already started, ignore
       }
-      liveEl.textContent = currentDelta;
-      break;
+    }
+  };
 
-    case 'conversation.item.input_audio_transcription.completed':
-      // Final transcript for this segment
-      if (liveEl) {
-        liveEl.classList.remove('transcript-live');
-        liveEl.textContent = event.transcript || currentDelta;
-        liveEl = null;
-      } else if (event.transcript) {
-        addTranscriptEntry(event.transcript);
-      }
-      currentDelta = '';
-      break;
-
-    case 'error':
-      console.error('[STT] Realtime API error:', event.error);
-      if (event.error && event.error.message) {
-        addTranscriptError('API: ' + event.error.message);
-      }
-      break;
-
-    default:
-      // Ignore other events (session.created, session.updated, etc.)
-      break;
-  }
-}
-
-function cleanupAudio() {
-  if (sourceNode) {
-    sourceNode.disconnect();
-    sourceNode = null;
-  }
-  if (workletNode) {
-    workletNode.disconnect();
-    workletNode = null;
-  }
-  if (audioCtx && audioCtx.state !== 'closed') {
-    audioCtx.close();
-    audioCtx = null;
-  }
-}
-
-function stopRealtimeSession() {
-  // Send commit to force final transcription of any remaining audio
-  if (ws && ws.readyState === WebSocket.OPEN) {
-    ws.send(JSON.stringify({ type: 'input_audio_buffer.commit' }));
-    console.log('[STT] Audio buffer committed');
-
-    // Give server a moment to send final transcript, then close
-    setTimeout(function () {
-      if (ws && ws.readyState === WebSocket.OPEN) {
-        ws.close();
-      }
-      ws = null;
-      setState('idle');
-    }, 1500);
-  } else {
-    ws = null;
+  try {
+    recognition.start();
+    isListening = true;
+    setState('recording');
+    console.log('[STT] Listening started');
+  } catch (err) {
+    console.error('[STT] Failed to start:', err);
     setState('idle');
   }
+}
 
-  cleanupAudio();
+function stopListening() {
+  isListening = false;
+
+  if (recognition) {
+    try {
+      recognition.stop();
+    } catch (e) {
+      // Already stopped
+    }
+    recognition = null;
+  }
+
+  // Finalize the live element
+  if (liveEl) {
+    if (liveEl.textContent.trim() === '') {
+      // Empty — remove it
+      liveEl.parentNode && liveEl.parentNode.removeChild(liveEl);
+    } else {
+      // Has content — finalize it
+      liveEl.classList.remove('transcript-live');
+    }
+    liveEl = null;
+  }
+
+  setState('idle');
+  console.log('[STT] Listening stopped');
 }
 
 // ── PTT Handlers ──────────────────────────────────────────────────────────────
-async function handlePressStart(e) {
-  const mediaStream = await acquireMic();
-  if (!mediaStream) return;
-  startRealtimeSession(mediaStream);
+function handlePressStart() {
+  startListening();
 }
 
 function handlePressEnd() {
-  // If no active WebSocket session, just reset
-  if (!ws || ws.readyState !== WebSocket.OPEN) {
-    setState('idle');
-    return;
-  }
-  stopRealtimeSession();
+  stopListening();
 }
 
 // ── Pointer Events ────────────────────────────────────────────────────────────
 micBtn.addEventListener('pointerdown', function (e) {
   e.preventDefault();
   micBtn.setPointerCapture(e.pointerId);
-  handlePressStart(e);
+  handlePressStart();
 });
 
 micBtn.addEventListener('pointerup', function () {
@@ -323,7 +203,6 @@ micBtn.addEventListener('pointercancel', function () {
 });
 
 // ── Diagnostics ───────────────────────────────────────────────────────────────
-console.log('[STT] Realtime transcription module loaded');
-console.log('[STT] AudioWorklet supported:', typeof AudioWorkletNode !== 'undefined');
-console.log('[STT] WebSocket supported:', typeof WebSocket !== 'undefined');
+console.log('[STT] Web Speech API module loaded');
+console.log('[STT] SpeechRecognition supported:', !!SpeechRecognition);
 console.log('[STT] Display mode:', (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone) ? 'standalone' : 'browser');
