@@ -77,10 +77,26 @@ Plans:
 Plans:
 - [ ] 04-01-PLAN.md — Wire audio-captured event through /api/transcribe to transcript panel display
 
+### Phase 4.1: Real-time Transcription + Layout Fix (INSERTED)
+**Goal**: Replace batch Whisper transcription with OpenAI Realtime API WebSocket for streaming live transcription while speaking, and anchor transcript to bottom-left next to mic button
+**Depends on**: Phase 4
+**Requirements**: STT-01 (upgrade), STT-03 (upgrade), UI-03 (upgrade)
+**Success Criteria** (what must be TRUE):
+  1. Text appears in the transcript panel while the user is still speaking (real-time streaming)
+  2. Transcript entries are anchored to the bottom-left of the screen, next to the mic button (bottom-right)
+  3. New text grows upward as more entries are added
+  4. api/session.js generates ephemeral tokens — client connects directly to OpenAI Realtime WebSocket
+  5. Processing state shows during connection setup, then live text streams in
+**Plans**: 2 plans
+
+Plans:
+- [ ] 04.1-01-PLAN.md — Bottom-anchored layout: transcript panel fixed bottom-left, mic button bottom-right, entries grow upward via column-reverse
+- [ ] 04.1-02-PLAN.md — Realtime API integration: ephemeral token endpoint, AudioWorklet PCM16 conversion, WebSocket streaming replacing batch Whisper
+
 ## Progress
 
 **Execution Order:**
-Phases 2 and 3 are independently buildable in parallel. All other phases are strictly sequential: 1 → (2 parallel 3) → 4.
+Phases 2 and 3 are independently buildable in parallel. All other phases are strictly sequential: 1 → (2 parallel 3) → 4 → 4.1.
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
@@ -88,3 +104,4 @@ Phases 2 and 3 are independently buildable in parallel. All other phases are str
 | 2. Audio Capture | 2/2 | Complete | 2026-03-25 |
 | 3. Vercel Proxy | 1/1 | Complete | 2026-03-25 |
 | 4. Pipeline Integration | 1/1 | Complete | 2026-03-25 |
+| 4.1. Realtime + Layout | 0/2 | Not started | - |

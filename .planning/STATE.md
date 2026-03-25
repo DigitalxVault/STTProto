@@ -5,7 +5,7 @@
 See: .planning/PROJECT.md (updated 2026-03-25)
 
 **Core value:** Push-to-talk produces accurate, immediate transcription so users can see exactly what they said and self-correct their RT discipline
-**Current focus:** Phase 4 — Pipeline Integration COMPLETE — PROJECT SHIPPED
+**Current focus:** Phase 4.1 — Real-time Transcription + Layout Fix (INSERTED)
 
 ## Current Position
 
@@ -81,9 +81,13 @@ Recent decisions affecting current work:
 - [04-01]: addTranscriptError calls showStatusTemp for status bar flash in addition to transcript panel entry
 - [04-01]: [STT] prefix used for pipeline integration logs, [PTT] prefix for audio capture logs
 
+### Roadmap Evolution
+
+- Phase 04.1 inserted after Phase 4: Real-time Transcription + Layout Fix (URGENT) — User requires streaming transcription via OpenAI Realtime API (not batch Whisper), and transcript anchored to bottom-left next to mic button
+
 ### Pending Todos
 
-- PROJECT COMPLETE. Deploy to Vercel and configure OPENAI_API_KEY to use in production.
+- Phase 4.1 needs planning and execution: replace batch Whisper with OpenAI Realtime API WebSocket, fix layout to bottom-anchored transcript
 
 ### Blockers/Concerns
 
