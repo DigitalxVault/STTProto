@@ -82,6 +82,19 @@ body {
   user-select: none;
 }
 
+.transcript-entry {
+  margin-bottom: 0.4rem;
+  color: var(--text-primary);
+  word-wrap: break-word;
+}
+
+.transcript-error {
+  margin-bottom: 0.4rem;
+  color: var(--text-dim);
+  font-style: italic;
+  word-wrap: break-word;
+}
+
 /* === Mic container === */
 .mic-container {
   flex-shrink: 0;
