@@ -13,7 +13,7 @@ Four phases deliver a working push-to-talk transcription PWA for military RT pra
 Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 1: Shell + PWA** - Installable military-aesthetic app shell with all visual states
-- [ ] **Phase 2: Audio Capture** - Push-to-talk recording with confirmed blob production on iOS and Android
+- [x] **Phase 2: Audio Capture** - Push-to-talk recording with confirmed blob production on iOS and Android
 - [ ] **Phase 3: Vercel Proxy** - Serverless function that proxies audio to Whisper and returns transcript text
 - [ ] **Phase 4: Pipeline Integration** - Wire audio → proxy → transcript into working end-to-end PTT loop
 
@@ -85,6 +85,6 @@ Phases 2 and 3 are independently buildable in parallel. All other phases are str
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Shell + PWA | 2/2 | Complete | 2026-03-25 |
-| 2. Audio Capture | 0/2 | Not started | - |
+| 2. Audio Capture | 2/2 | Complete | 2026-03-25 |
 | 3. Vercel Proxy | 0/1 | Not started | - |
 | 4. Pipeline Integration | 0/1 | Not started | - |
