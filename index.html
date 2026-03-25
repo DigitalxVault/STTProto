@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#1a1a1a">
+  <meta name="apple-mobile-web-app-title" content="RT Trainer">
+  <link rel="manifest" href="/manifest.json">
+  <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+  <title>RADStrat RT Trainer</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+
+  <header class="status-bar">
+    <span class="status-label">RADSTRAT RT TRAINER</span>
+    <span class="status-indicator">&#9632; STANDBY</span>
+  </header>
+
+  <main class="transcript-panel">
+    <p class="transcript-placeholder">// AWAITING TRANSMISSION...</p>
+  </main>
+
+  <div class="mic-container">
+    <button class="mic-btn state-idle" aria-label="Push to talk" type="button">
+      <svg viewBox="0 0 24 24" width="28" height="28" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <rect x="9" y="2" width="6" height="11" rx="3" fill="#c8c8c8"/>
+        <path d="M5 11a7 7 0 0 0 14 0" stroke="#c8c8c8" stroke-width="2" stroke-linecap="round"/>
+        <line x1="12" y1="18" x2="12" y2="22" stroke="#c8c8c8" stroke-width="2" stroke-linecap="round"/>
+        <line x1="9" y1="22" x2="15" y2="22" stroke="#c8c8c8" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+    </button>
+  </div>
+
+  <!-- PHASE 1 VERIFICATION ONLY: shows all three button states side-by-side -->
+  <div class="state-demo" aria-hidden="true">
+    <div class="state-demo-item">
+      <button class="mic-btn state-idle demo-btn" tabindex="-1">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect x="9" y="2" width="6" height="11" rx="3" fill="#c8c8c8"/>
+          <path d="M5 11a7 7 0 0 0 14 0" stroke="#c8c8c8" stroke-width="2" stroke-linecap="round"/>
+          <line x1="12" y1="18" x2="12" y2="22" stroke="#c8c8c8" stroke-width="2" stroke-linecap="round"/>
+          <line x1="9" y1="22" x2="15" y2="22" stroke="#c8c8c8" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+      </button>
+      <span class="state-label">IDLE</span>
+    </div>
+    <div class="state-demo-item">
+      <button class="mic-btn state-recording demo-btn" tabindex="-1">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect x="9" y="2" width="6" height="11" rx="3" fill="#c8c8c8"/>
+          <path d="M5 11a7 7 0 0 0 14 0" stroke="#c8c8c8" stroke-width="2" stroke-linecap="round"/>
+          <line x1="12" y1="18" x2="12" y2="22" stroke="#c8c8c8" stroke-width="2" stroke-linecap="round"/>
+          <line x1="9" y1="22" x2="15" y2="22" stroke="#c8c8c8" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+      </button>
+      <span class="state-label">REC</span>
+    </div>
+    <div class="state-demo-item">
+      <button class="mic-btn state-processing demo-btn" tabindex="-1">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect x="9" y="2" width="6" height="11" rx="3" fill="#c8c8c8"/>
+          <path d="M5 11a7 7 0 0 0 14 0" stroke="#c8c8c8" stroke-width="2" stroke-linecap="round"/>
+          <line x1="12" y1="18" x2="12" y2="22" stroke="#c8c8c8" stroke-width="2" stroke-linecap="round"/>
+          <line x1="9" y1="22" x2="15" y2="22" stroke="#c8c8c8" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+      </button>
+      <span class="state-label">PROC</span>
+    </div>
+  </div>
+  <!-- END PHASE 1 VERIFICATION -->
+
+  <script src="/app.js" defer></script>
+</body>
+</html>
